@@ -75,21 +75,21 @@
     </div>
 
 
-    <!-- Редактор текста
+    <!-- Редактор текста -->
     <div class="container mt-5 mb-5">
         <div class="row">
             <div class="col">
-                <textarea>
+                <textarea id="paragraph-textarea">
                     
                 </textarea>
             </div>
         </div>
-    </div> -->
+    </div>
 
     <div class="container">
         <div class="row">
             <div class="col-12 mb-5 text-center">
-                <a href="" class="btn btn-itd btn-lg text-uppercase">Далее</a>
+                <a href="" id="next-paragraph" class="btn btn-itd btn-lg text-uppercase">Далее</a>
             </div>
         </div>
     </div>
@@ -142,16 +142,19 @@
         }
     </script>
 
-    <!-- Tiny cloud - редактор текста
+    <!-- Tiny cloud - редактор текста -->
     <script src="https://cdn.tiny.cloud/1/arhcc2ybkw0s1h5crx8wxjtmm7ohr06b0ha33jxzxfxi033z/tinymce/6/tinymce.min.js"
-        referrerpolicy="origin"></script> -->
+        referrerpolicy="origin"></script>
 
     <!-- Подключение редактора -->
-    <!-- <script>
+    <script>
         tinymce.init({
-            selector: 'textarea',
+            selector: '#paragraph-textarea',
             plugins: 'ai tinycomments mentions anchor autolink charmap codesample emoticons image link lists media searchreplace table visualblocks wordcount checklist mediaembed casechange export formatpainter pageembed permanentpen footnotes advtemplate advtable advcode editimage tableofcontents mergetags powerpaste tinymcespellchecker autocorrect a11ychecker typography inlinecss',
             toolbar: 'undo redo | blocks fontfamily fontsize | bold italic underline strikethrough | link image media table mergetags | align lineheight | tinycomments | checklist numlist bullist indent outdent | emoticons charmap | removeformat',
+            setup(ed) {
+                ed.on('keyup', () => tinymce.triggerSave());
+            },
             // tinycomments_mode: 'embedded',
             // tinycommen   ts_author: 'Author name',
             // mergetags_list: [
@@ -160,7 +163,7 @@
             // ],
             // ai_request: (request, respondWith) => respondWith.string(() => Promise.reject("See docs to implement AI Assistant")),
         });
-    </script> -->
+    </script>
 
     <script src="../library/bootstrap.bundle.min.js"></script>
     <script src="../frontend.js"></script>

@@ -4,14 +4,22 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "start": "node .",
+    "dev": "nodemon",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "docxtemplater": "^3.46.2",
     "express": "^5.0.0-beta.2",
+    "express-session": "^1.18.0",
     "jsonwebtoken": "^9.0.2",
-    "pg": "^8.11.3"
+    "nodemon": "^3.1.0",
+    "pg": "^8.11.3",
+    "pizzip": "^3.1.7",
+    "sanitize-html": "^2.13.0",
+    "uuid": "^9.0.1"
   }
 }

@@ -1,0 +1,8 @@
+{
+	"watch": [
+		"index.js",
+		"Project"
+	],
+	"ext": "js,html,css",
+	"exec": "node ."
+}

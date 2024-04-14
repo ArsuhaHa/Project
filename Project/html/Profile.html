@@ -25,7 +25,7 @@
                 <div class="row text-center">
                     <button id="btn-profile" class="btn btn-itd text-uppercase mb-3">Мой профиль</button>
                     <button id="btn-project" class="btn btn-itd text-uppercase mb-3">Мои проекты</button>
-                    <a href="signIn.html" class="btn btn-itd text-uppercase mb-2">Выйти из аккаунта</a>
+                    <a href="signIn.html" id="logout" class="btn btn-itd text-uppercase mb-2">Выйти из аккаунта</a>
                 </div>
             </div>
 
@@ -80,14 +80,14 @@
                     </div>
                     <div class="container mb-5">
                         <div class="row">
-                            <div class="col-12 d-flex justify-content-center align-items-center">
-                                <div class="card" style="width: 18rem;">
+                            <div id="project-list" class="col-12 d-flex justify-content-center align-items-center">
+                                <div class="card d-none" style="width: 18rem;">
                                     <div class="card-body">
                                         <h5 class="card-title mb-5">Название проекта</h5>
                                         
-                                        <a href="#" class="btn btn-itd btn-primary mt-5 d-flex justify-content-center">Изменить</a>
-                                        <a href="#" class="btn btn-itd btn-primary mt-5 d-flex justify-content-center">Скачать</a>
-                                        <a href="#" class="btn btn-itd btn-primary mt-5 d-flex justify-content-center">Удалить</a>
+                                        <a href="#" class="button-change btn btn-itd btn-primary mt-5 d-flex justify-content-center">Изменить</a>
+                                        <a href="#" class="button-download btn btn-itd btn-primary mt-5 d-flex justify-content-center">Скачать</a>
+                                        <a href="#" class="button-delete btn btn-itd btn-primary mt-5 d-flex justify-content-center">Удалить</a>
                                     </div>
                                 </div>
                             </div>                        
@@ -119,14 +119,12 @@
         btn_profile.onclick = function() {
             tmp.style.display = 'none';
             project.style.display = 'none';
-
             profile.style.display = 'block';
         }
 
         btn_project.onclick = function() {
             tmp.style.display = 'none';
             project.style.display = 'block';
-
             profile.style.display = 'none';
         }
     </script>

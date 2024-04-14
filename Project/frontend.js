@@ -16,6 +16,11 @@ async function postData(url = '', data = {}) {
     try {
         const response = await fetch(url, requestOptions);
         const responseData = await response.json();
+
+        if (response.status >= 400) {
+            throw new Error(responseData?.message);
+        }
+
         return responseData;
     } catch (error) {
         console.error('Ошибка при выполнении запроса:', error);
@@ -44,9 +49,6 @@ async function putData(url = '', data = {}) {
         throw error;
     }
 }
-
-
-
 
 function printError(flag) {
     const errorText = document.querySelector('.errorRegText'); // Выбираем элемент по классу
@@ -89,77 +91,73 @@ function clearError() {
 
 
 /* ДЛЯ РЕГИСТРАЦИИ ПОЛЬЗОВАТЕЛЯ  */
-
-
-
 async function registerUser() {
     const email = document.getElementById('emailReg').value;
     const fullName = document.getElementById('nameReg').value;
     const password = document.getElementById('passReg').value;
     const conPassword = document.getElementById('passConReg').value;
 
-    // localStorage.removeItem('token');
-    // localStorage.removeItem('id_student');
+    // sessionStorage.removeItem('token');
+    // sessionStorage.removeItem('id_student');
 
-    if (email && fullName && password && conPassword) {
-        if (email.includes('@')) {
-            if (password !== conPassword) {
-                console.log("Пароли не совпадают");
-                printError(3);
-            } else {
-                const data = { email, fullName, password };
-
-                try {
-                    const response = await postData('/register', data);
-                    console.log(response);
-                    console.log('Регистрация успешна, токен:', response.token);
-
-                    clearError();
-
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('id_student', response.id_student);
-
-                    window.location.href = "Start.html";
-
-
-                } catch (error) {
-                    console.error('Ошибка при регистрации:', error);
-                    printError(4);
-                }
-            }
-        }
-        else {
-            console.log('Некоректная почта');
-            printError(2);
-        }
-    } else {
+    if (!email || !fullName || !password || !conPassword) {
         console.log("Не все данные заполнены");
         printError(1);
+
+        return;
+    }
+
+    if (!email.includes('@')) {
+        console.log('Некоректная почта');
+        printError(2);
+
+        return;
+    }
+
+    if (password !== conPassword) {
+        console.log("Пароли не совпадают");
+        printError(3);
+
+        return;
+    }
+
+    const data = { email, fullName, password };
+
+    try {
+        const response = await postData('/register', data);
+
+        console.log(response);
+        console.log('Регистрация успешна, токен:', response.token);
+
+        clearError();
+
+        sessionStorage.setItem('token', response.token);
+        sessionStorage.setItem('id_student', response.id_student);
+
+        window.location.href = "Start.html";
+    } catch (error) {
+        console.error('Ошибка при регистрации:', error.message);
+        printError(4);
     }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-    const registerBtn = document.getElementById('registerBtn');
+    const registerform = document.getElementById('register_form');
 
-    registerBtn.addEventListener('click', async (event) => {
+    registerform.addEventListener('submit', async (event) => {
         event.preventDefault();
 
         await registerUser();
     });
 });
 
-
-
-
-
 // АВТОРИЗАЦИЯ ПОЛЬЗОВАТЕЛЯ
 async function loginUser() {
     const email = document.getElementById('emailLogin').value;
     const password = document.getElementById('passwordLogin').value;
-    console.log(email);
 
-    localStorage.removeItem('token');
-    localStorage.removeItem('id_student');
+    sessionStorage.removeItem('token');
+    sessionStorage.removeItem('id_student');
     // const email = "ars@mail.ru";
     // const password = "123";
 
@@ -178,8 +176,8 @@ async function loginUser() {
 
                     clearError();
 
-                    localStorage.setItem('token', response.token);
-                    localStorage.setItem('id_student', response.id_student);
+                    sessionStorage.setItem('token', response.token);
+                    sessionStorage.setItem('id_student', response.idStudent);
 
                     window.location.href = "Start.html";
                 }
@@ -222,13 +220,10 @@ async function changeProfile() {
         return;
     }
 
-
-    const token = localStorage.getItem('token');
-
-    
+    const token = sessionStorage.getItem('token');
 
     if (!token) {
-        console.error('Токен не найден в localStorage');
+        console.error('Токен не найден в sessionStorage');
         return;
     }
 
@@ -250,7 +245,7 @@ async function changeProfile() {
         const response = await putData('/students/me', data);
         console.log('Данные успешно обновлены:', response);
 
-        localStorage.setItem('profileData', JSON.stringify(response));
+        sessionStorage.setItem('profileData', JSON.stringify(response));
 
         window.location.href = "Profile.html";
 
@@ -275,8 +270,20 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 document.addEventListener('DOMContentLoaded', () => {
-    // Получаем данные из localStorage
-    const profileData = JSON.parse(localStorage.getItem('profileData'));
+    // Получаем данные из sessionStorage
+    const serialized = sessionStorage.getItem('profileData');
+
+    if (!serialized) {
+        return;
+    }
+    
+    try {
+        JSON.parse(serialized);
+    } catch (e) {
+        return;
+    }
+
+    const profileData = JSON.parse(serialized);
 
     if (profileData) {
         // Обновляем контент на странице
@@ -290,24 +297,18 @@ document.addEventListener('DOMContentLoaded', () => {
         classNameProfile.innerHTML = `${profileData.school_class}${profileData.school_letter}`;
         countryAndCityProfile.innerHTML = `${profileData.country} - ${profileData.city}`;
 
-        // Очищаем данные из localStorage после использования, если нужно
-        localStorage.removeItem('profileData');
+        // Очищаем данные из sessionStorage после использования, если нужно
+        sessionStorage.removeItem('profileData');
     } else {
-        console.error('Данные профиля не найдены в localStorage');
+        console.error('Данные профиля не найдены в sessionStorage');
     }
 });
 
-
-
-
-
-
-
 async function getProfileData() {
-    const token = localStorage.getItem('token');
+    const token = sessionStorage.getItem('token');
 
     if (!token) {
-        console.error('Токен не найден в localStorage');
+        console.error('Токен не найден в sessionStorage');
         return;
     }
 
@@ -329,15 +330,12 @@ async function getProfileData() {
         const city = STUDENT_DATA.city;
         const country = STUDENT_DATA.country;
 
-
-
         let nameOfStudent = document.getElementById('studentNameProfile');
         nameOfStudent.innerHTML = `${FIRST_NAME} ${SECOND_NAME} ${THIRD_NAME}`;
 
         let schoolNameProfile = document.getElementById('schoolNameProfile');
         let classNameProfile = document.getElementById('classNameProfile');
         let countryCityProfile = document.getElementById('countryCityProfile');
-
 
         schoolNameProfile.innerHTML = `${NAME_SCHOOL}`;
         classNameProfile.innerHTML = `${CLASS}`;
@@ -358,85 +356,44 @@ document.addEventListener('DOMContentLoaded', () => {
     getProfileData();
 });
 
-
-
-
 // СОЗДАНИЕ ПРОЕКТА
-async function createProject() {
-    const token = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyc2VuYXZ0b3JAbWFpbC5ydSIsIklEX1NUVURFTlQiOjEsImlhdCI6MTcxMjIyNzI5MCwiZXhwIjoxNzEyMjMwODkwfQ.G591gDwL_Nw9yHJHufzlUzulWEYaQYNK6k9mnsXahLg"; // Замените на ваш токен доступа
-    const idStudent = "1";
+async function createProject(project) {
+    const token = sessionStorage.getItem('token');
+    const idStudent = sessionStorage.getItem('id_student');
+    const payload = { idStudent, token, project };
     const url = '/projects';
 
-    const project = {
-        projectName: "Проект Семёна",
-        text: {
-            1: "as",
-            2: "ds",
-            3: "123",
-            4: "3",
-            5: "4"
-        }
-    };
-
-    const DATA = { token, idStudent, project };
-    console.log(DATA);
-
     try {
-        const response = await postData(url, DATA);
+        const body = await postData(url, payload);
+        const { projectId } = body;
 
-        console.log(response);
-
-        // console.log('ID созданного проекта:', response.projectId);
-        console.log("Проект успешно создан");
+        return projectId;
     } catch (error) {
         console.error('Error:', error.message);
     }
 }
-// createProject();
-
-
-
-
 
 // ОБНОВЛЕНИЕ ПРОЕКТА
-async function updateProject() {
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyc2VuYXZ0b3JAbWFpbC5ydSIsIklEX1NUVURFTlQiOjEsImlhdCI6MTcxMjIyNzI5MCwiZXhwIjoxNzEyMjMwODkwfQ.G591gDwL_Nw9yHJHufzlUzulWEYaQYNK6k9mnsXahLg'; // Замените на ваш токен доступа
-    const projectId = '2';
-    const studentId = '1';
-    const project = {
-        projectName: "Да, меняется",
-        text: {
-            1: "всё",
-            2: "ок",
-            3: "работает",
-            4: "норм",
-            5: "4"
-        }
-    };
-
+async function updateProject(project, projectId) {
+    const token = sessionStorage.getItem('token');
+    const studentId = sessionStorage.getItem('id_student');
     const UpdateData = { token, projectId, studentId, project };
-
     const url = `/projects/${projectId}`;
 
-
     try {
-        const response = await putData(url, UpdateData);
+        await putData(url, UpdateData);
 
-        console.log("Проект успешно изменен", response.project);
+        return projectId;
     } catch (error) {
         console.error('Error:', error.message);
     }
 }
-// updateProject();
-
-
 
 // ПОЛУЧЕНИЕ ПРОЕКТА СТУДЕНТА ПО ЕГО ID
 async function getProjectData() {
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyc2VuYXZ0b3JAbWFpbC5ydSIsIklEX1NUVURFTlQiOjEsImlhdCI6MTcxMjIyNzI5MCwiZXhwIjoxNzEyMjMwODkwfQ.G591gDwL_Nw9yHJHufzlUzulWEYaQYNK6k9mnsXahLg'; // Замените на ваш токен доступа
+    const token = sessionStorage.getItem('token');
     const projectId = '1';
     const url = `/projects/${projectId}`;
-
 
     try {
         const response = await fetch(url, {
@@ -455,13 +412,281 @@ async function getProjectData() {
 }
 // getProjectData();
 
+document.addEventListener('DOMContentLoaded', async () => {
+    if (location.pathname.endsWith("Profile.html")) {
+        const info = await getStudentProjectsInfo();
+        const {ID_STUDENT, PROJECTS} = info;
+        const listElement = document.getElementById("project-list");
+        const cardElement = listElement.querySelector(".card");
+
+        if(!PROJECTS?.length) {
+            return;
+        }
+
+        listElement.addEventListener('click', async (event) => {
+            const target = event.target;
+            const isChange = target.classList.contains("button-change");
+            const isDownload = target.classList.contains("button-download");
+            const isDelete = target.classList.contains("button-delete");
+
+            if (!(isChange || isDownload || isDelete)) {
+                return;
+            }
+
+            const body = target.parentElement;
+            const card = body.parentElement;
+            const projectId = body.dataset.projectId;
+
+            if (isChange) {
+                const success = await requestChange(projectId);
+
+                if (success) {
+                    location.href = `${location.origin}/html/tmp.html?id=${projectId}&p=1`;
+                }
+
+                return;
+            }
+
+            if (isDownload) {
+                const location = await downloadProject(projectId);
+
+                if (!location) {
+                    return;
+                }
+
+                immitateClick(location);
+
+                return;
+            }
+
+            if (isDelete) {
+                await deleteProject(projectId);
+                listElement.removeChild(card);
+
+                return;
+            }
+        });
+
+        for (const project of PROJECTS) {
+            const {PROJECT_ID, projects_name} = project;
+            const clone = cardElement.cloneNode(true);
+            const bodyElement = clone.querySelector(".card-body");
+            const titleElement = clone.querySelector(".card-title");
+
+            titleElement.innerHTML = projects_name;
+            bodyElement.dataset.projectId = PROJECT_ID;
+            bodyElement.dataset.studentId = ID_STUDENT;
+
+            listElement.append(clone);
+
+            clone.classList.remove("d-none");
+        }
+    }
+});
+
+document.addEventListener('DOMContentLoaded', () => {
+    const logoutElement = document.getElementById("logout");
+
+    if (logoutElement) {
+        logoutElement.addEventListener("click", () => {
+            sessionStorage.setItem('token', '');
+            sessionStorage.setItem('id_student', '');
+            sessionStorage.setItem('profileData', '');
+        })
+    }
+});
+
+function getCurrentParagraph() {
+    const search = new URLSearchParams(location.search);
+    let searchParagraph = search.get("p");
+    let currentParagraph = 1;
+
+    if (searchParagraph) {
+        currentParagraph = Number(searchParagraph);
+    }
+
+    return currentParagraph;
+}
+
+async function storeProject(data, id) {
+    if (id) {
+        return await updateProject(data, id);
+    } 
+
+    return await createProject(data);
+}
+
+async function fetchParagraph(id) {
+    const token = sessionStorage.getItem('token');
+
+    if (!token) {
+        return;
+    }
+
+    const url = `/stored/${id}`;
+    const params = {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        }
+    };
+
+    try {
+        const response = await fetch(url, params);
+        const { status } = response;
+
+        if (status === 404) {
+            return;
+        }
+
+        const parsed = await response.json();
+        const { text } = parsed;
+
+        return text;
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+}
+
+async function storeParagraph(text, id) {
+    const token = sessionStorage.getItem('token');
+
+    if (!token) {
+        return;
+    }
+
+    const url = `/stored/${id}`;
+    const params = {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+        },
+        body: JSON.stringify({ text }),
+    };
+
+    try {
+        const response = await fetch(url, params);
+        const { status } = response;
+
+        return status === 301;
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+
+    return false;
+}
+
+async function fetchParagraphs() {
+    const token = sessionStorage.getItem('token');
+
+    if (!token) {
+        return;
+    }
+
+    const url = `/stored`;
+    const params = {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${token}`,
+        },
+    };
+
+    try {
+        const response = await fetch(url, params);
+        const { status } = response;
+
+        if (status === 404) {
+            return;
+        }
+
+        const body = await response.json();
+
+        return body?.texts;
+    } catch (error) {
+        console.error('Error:', error.message);
+    }
+}
+
+async function handleNextParagraph(event) {
+    event.preventDefault();
+
+    const search = new URLSearchParams(location.search);
+    const text = tinymce.activeEditor.getContent();
+    const projectId = search.get("id");
+    const currentParagraph = getCurrentParagraph();
+    const nextParagraph = currentParagraph + 1;
+
+    await storeParagraph(text, currentParagraph);
+
+    if (currentParagraph === 15) {
+        const text = await fetchParagraphs();
+        const id = await storeProject({
+            projectName: "Проект",
+            text,
+        }, projectId);
+
+        if (id === undefined) {
+            return;
+        }
+
+        const location = await downloadProject(id);
+
+        if (!location) {
+            return;
+        }
+
+        immitateClick(location);
+
+        return;
+    }
+
+    search.set("p", `${nextParagraph}`);
+    location.search = `?${search.toString()}`;
+}
+
+document.addEventListener('DOMContentLoaded', async () => {
+    const nextPElement = document.getElementById("next-paragraph");
+    const paragraphElement = document.getElementById("paragraph-textarea");
+
+    if (nextPElement) {
+        nextPElement.addEventListener('click', handleNextParagraph);
+    }
+
+    if (paragraphElement) {
+        const search = new URLSearchParams(location.search);
+        const isEditing = search.has("id");
+
+        if (isEditing) {
+            const paragraph = getCurrentParagraph();
+            const text = await fetchParagraph(paragraph);
+    
+            if (text) {
+                setTimeout(() => tinymce.activeEditor.setContent(text), 1000);
+            }
+        }
+    }
+});
+
+function immitateClick(location) {
+    const a = document.createElement('a');
+    a.href = location;
+    a.classList.add("d-none");
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+}
+
 
 // ПОЛУЧЕНИЕ ВСЕХ ПРОЕКТОВ СТУДЕНТА
-async function getStudentProjects() {
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyc2VuYXZ0b3JAbWFpbC5ydSIsIklEX1NUVURFTlQiOjEsImlhdCI6MTcxMjIyNzI5MCwiZXhwIjoxNzEyMjMwODkwfQ.G591gDwL_Nw9yHJHufzlUzulWEYaQYNK6k9mnsXahLg'; // Замените на ваш токен доступа
-    // const idStudent = "1";
-    const url = '/projects'; // Укажите правильный URL для получения проектов студента
+async function getStudentProjectsInfo() {
+    const token = sessionStorage.getItem('token');
 
+    if (!token) {
+        return;
+    }
+
+    const url = '/projects'; // Укажите правильный URL для получения проектов студента
     const params = {
         method: 'GET',
         headers: {
@@ -471,13 +696,14 @@ async function getStudentProjects() {
 
     try {
         const response = await fetch(url, params);
-
         const studentProjects = await response.json();
-        console.log('Список проектов студента:', studentProjects);
-        // Обработка полученных данных, если необходимо
+
+        return studentProjects.info;
     } catch (error) {
         console.error('Error:', error.message);
     }
+
+    return [];
 }
 // getStudentProjects();
 
@@ -487,31 +713,45 @@ async function getStudentProjects() {
 // const projectId = 'YOUR_PROJECT_ID'; // Замените на идентификатор проекта, который вы хотите удалить
 // const url = `/students/me/projects/${projectId}`;
 
-async function deleteProject() {
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyc2VuYXZ0b3JAbWFpbC5ydSIsIklEX1NUVURFTlQiOjEsImlhdCI6MTcxMjIyNzI5MCwiZXhwIjoxNzEyMjMwODkwfQ.G591gDwL_Nw9yHJHufzlUzulWEYaQYNK6k9mnsXahLg'; // Замените на ваш токен доступа
-    const projectId = '1';
+async function deleteProject(projectId) {
+    const token = sessionStorage.getItem('token');
     const url = `/projects/${projectId}`; // Укажите правильный URL для получения проектов студента
+
     try {
-        const response = await fetch(url, {
+        await fetch(url, {
             method: 'DELETE',
             headers: {
                 'Authorization': `Bearer ${token}`
             }
         });
-
-
-
-        console.log('Проект успешно удален');
     } catch (error) {
         console.error('Ошибка:', error.message);
     }
 }
 // deleteProject();
 
+async function requestChange(projectId) {
+    const token = sessionStorage.getItem('token');
+    const url = `/projects/${projectId}/edit`;
 
-async function downloadProject() {
-    const projectId = '2';
-    const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6ImFyc2VuYXZ0b3JAbWFpbC5ydSIsIklEX1NUVURFTlQiOjEsImlhdCI6MTcxMjIyNzI5MCwiZXhwIjoxNzEyMjMwODkwfQ.G591gDwL_Nw9yHJHufzlUzulWEYaQYNK6k9mnsXahLg'; // Замените на ваш токен доступа
+    try {
+        const response = await fetch(url, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${token}`
+            },
+        });
+
+        return response.status === 200;
+    } catch (error) {
+        console.error('Ошибка:', error.message);
+    }
+
+    return false;
+}
+
+async function downloadProject(projectId) {
+    const token = sessionStorage.getItem('token');
     const url = `/projects/${projectId}/download`;
 
     try {
@@ -519,29 +759,20 @@ async function downloadProject() {
             method: 'GET',
             headers: {
                 'Authorization': `Bearer ${token}`
-            }
+            },
+            redirect: "manual",
         });
 
+        const body = await response.json();
+        const { location } = body;
 
-        // Получение данных о проекте для скачивания
-        const projectData = await response.json();
-        console.log('Данные о проекте для скачивания:', projectData);
-        // Обработка полученных данных, если необходимо
+        if (location) {
+            return location;
+        }
     } catch (error) {
         console.error('Ошибка:', error.message);
     }
 }
-// downloadProject();
-
-
-
-
-
-
-
-
-
-
 
 
 // // Login user - пон надатию на кнопку выполняется функция loginUser();
