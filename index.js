@@ -26,7 +26,7 @@ const TEMPLATE_PATH = join(__dirname, "template.docx");
 
 const pool = new Pool({
     user: 'postgres',
-    host: 'db',
+    host: 'localhost',
     database: 'postgres',
     password: '123',
     port: 5432,
