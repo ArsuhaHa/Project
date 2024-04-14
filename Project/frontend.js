@@ -654,11 +654,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     if (paragraphElement) {
-        const paragraph = getCurrentParagraph();
-        const text = await fetchParagraph(paragraph);
+        const search = new URLSearchParams(location.search);
+        const isEditing = search.has("id");
 
-        if (text) {
-            setTimeout(() => tinymce.activeEditor.setContent(text), 1000);
+        if (isEditing) {
+            const paragraph = getCurrentParagraph();
+            const text = await fetchParagraph(paragraph);
+    
+            if (text) {
+                setTimeout(() => tinymce.activeEditor.setContent(text), 1000);
+            }
         }
     }
 });

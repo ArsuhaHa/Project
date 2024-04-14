@@ -1,6 +1,7 @@
 const { join } = require('node:path');
 const express = require('express');
 const session = require('express-session');
+const sanitizeHtml = require('sanitize-html');
 const { v4: uuidv4 } = require('uuid');
 const path = require('path');
 const { threadId } = require('worker_threads');
@@ -535,7 +536,7 @@ app.get('/projects/:projectId/download', async (req, res) => {
         };
 
         if (result.rows.length === 1 && result.rows[0].token === TOKEN) {
-            const info = await client.query('SELECT * FROM projects WHERE id_project = $1', [PROJECT_ID]);
+            const info = await client.query('SELECT *, TO_CHAR(create_date::date, \'yyyy\') as date FROM projects WHERE id_project = $1', [PROJECT_ID]);
             const texts = await client.query('SELECT * FROM text_project WHERE id_project = $1', [PROJECT_ID]);
             const student = await client.query('SELECT * FROM students WHERE id_student = $1', [id_student]);
 
@@ -547,10 +548,13 @@ app.get('/projects/:projectId/download', async (req, res) => {
             data.CITY = student.rows[0].city;
             data.COUNTRY = student.rows[0].country;
             data.PROJECT_NAME = info.rows[0].project_name;
-            data.CREATE_DATE = info.rows[0].create_date;
+            data.CREATE_DATE = info.rows[0].date;
 
             for (const textStep of texts.rows) {
-                data[`text_inner${textStep.step_number}`] = textStep.step_inner;
+                data[`text_inner${textStep.step_number}`] = sanitizeHtml(textStep.step_inner, {
+                    allowedTags: [],
+                    allowedAttributes: {},
+                });
             }
 
             const downloads = req.session?.downloads || [];

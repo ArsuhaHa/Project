@@ -1,6 +1,6 @@
 services:
   app:
-    image: node:20.9
+    image: node:20.9-slim
     working_dir: /app
     user: node
     ports:
